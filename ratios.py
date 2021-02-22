@@ -99,21 +99,26 @@ class LongFloat(object):
             a *= -1
             return LongFloat((self.b ** a, self.a ** a)).__reduce__()
 
+    def __abs__(self):
+        return LongFloat((abs(self.a), self.b))
+
     def __mod__(self, other):
-        m_a, a = self.m_p, self.m
-        m_other, other = LongFloat(other).asTuple()
-        m_c = max(m_a, m_other)
-        a *= 10 ** (m_c - m_a)
-        other *= 10 ** (m_c - m_other)
-        return LongFloat((m_c, a % other)).remove_zeros()
+        res = self / LongFloat(other)
+        res = res.asTuple()
+        res = LongFloat((res[0] % res[1], res[1]))
+        return res
+
+    def __divmod__(self, other):
+        res = self / LongFloat(other)
+        res = res.asTuple()
+        res = float(LongFloat((res[0] % res[1], res[1]))), float(LongFloat((res[0] // res[1], 1)))
+        return res
 
     def __floordiv__(self, other):
-        m_a, a = self.m_p, self.m
-        m_other, other = LongFloat(other).asTuple()
-        m_c = max(m_a, m_other)
-        a *= 10 ** (m_c - m_a)
-        other *= 10 ** (m_c - m_other)
-        return LongFloat((m_c, a // other)).remove_zeros()
+        res = self / LongFloat(other)
+        res = res.asTuple()
+        res = LongFloat((res[0] // res[1], 1))
+        return res
 
     def __reversed__(self):
         return LongFloat(1) / self
@@ -124,25 +129,44 @@ class LongFloat(object):
     def __sub__(self, other):
         return self + (-LongFloat(other))
 
+    def __eq__(self, other):
+        if isinstance(other, (int, float, type(self), tuple)):
+            return LongFloat(other).asTuple() == self.asTuple()
+        else:
+            return False
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __lt__(self, other):
+        if isinstance(other, (int, float, type(self), tuple)):
+            return (self - LongFloat(other)).asTuple()[0] < 0
+
+    def __le__(self, other):
+        if isinstance(other, (int, float, type(self), tuple)):
+            return (self - LongFloat(other)).asTuple()[0] <= 0
+
+    def __gt__(self, other):
+        if isinstance(other, (int, float, type(self), tuple)):
+            return (self - LongFloat(other)).asTuple()[0] > 0
+
+    def __ge__(self, other):
+        if isinstance(other, (int, float, type(self), tuple)):
+            return (self - LongFloat(other)).asTuple()[0] >= 0
+
     def asTuple(self):
         return (self.a, self.b)
 
+    def __int__(self):
+        return self.__floordiv__(1).asTuple()[0]
+
+    def __float__(self):
+        return self.a / self.b
+
     def __str__(self):
-        # res = str(abs(self.m))
-        # if self.m_p != 0:
-        #     if not -8 <= self.m_p < len(res):
-        #         if len(res) > 1:
-        #             res = res[0] + '.' + res[1:]
-        #         m_a = -self.m_p + get_count(res)
-        #         res = res + 'e' + str(m_a)
-        #     else:
-        #         res = res[:len(res) - self.m_p] + ('.' if len(res) > 1 else '') + res[len(
-        #             res) - self.m_p:] + '0' * -self.m_p
-        # if self.m < 0:
-        #     res = '-' + res
-        return f"LongFloat({self.a / self.b})"
+        return f"LongFloat({self.a} / {self.b} = {self.a / self.b})"
 
 
 a = LongFloat(0)
 b = LongFloat(3)
-print()
+print(int(LongFloat(2.5)))
